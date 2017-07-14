@@ -1,6 +1,7 @@
 package com.waracle.androidtest;
 
 import android.annotation.SuppressLint;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.support.v7.app.AppCompatActivity;
@@ -28,7 +29,7 @@ import java.net.URL;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static String JSON_URL = "https://gist.githubusercontent.com/hart88/198f29ec5114a3ec3460/" +
+    private static final String JSON_URL = "https://gist.githubusercontent.com/hart88/198f29ec5114a3ec3460/" +
             "raw/8dd19a88f9b8d24c23d9960f3300d0c917a4f07c/cake.json";
 
     @Override
@@ -84,7 +85,7 @@ public class MainActivity extends AppCompatActivity {
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-            mListView = (ListView) rootView.findViewById(R.id.list);
+            mListView = (ListView) rootView.findViewById(android.R.id.list);
             return rootView;
         }
 
@@ -97,14 +98,32 @@ public class MainActivity extends AppCompatActivity {
             mListView.setAdapter(mAdapter);
 
             // Load data from net.
-            try {
-                JSONArray array = loadData();
-                mAdapter.setItems(array);
-            } catch (IOException | JSONException e) {
-                Log.e(TAG, e.getMessage());
-            }
+            new LoadJson().execute();
         }
 
+        private class LoadJson extends AsyncTask<Void, Void, JSONArray> {
+
+            @Override
+            protected JSONArray doInBackground(Void... params) {
+                JSONArray array = null;
+
+                try {
+                    array = loadData();
+                } catch (IOException | JSONException e) {
+                    Log.e(TAG, e.getMessage());
+                }
+
+                return array;
+            }
+
+            @Override
+            protected void onPostExecute(JSONArray jsonArray) {
+                super.onPostExecute(jsonArray);
+
+                mAdapter.setItems(jsonArray);
+                mAdapter.notifyDataSetChanged();
+            }
+        }
 
         private JSONArray loadData() throws IOException, JSONException {
             URL url = new URL(JSON_URL);
@@ -189,28 +208,49 @@ public class MainActivity extends AppCompatActivity {
             @SuppressLint("ViewHolder")
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
-                LayoutInflater inflater = LayoutInflater.from(getActivity());
-                View root = inflater.inflate(R.layout.list_item_layout, parent, false);
-                if (root != null) {
-                    TextView title = (TextView) root.findViewById(R.id.title);
-                    TextView desc = (TextView) root.findViewById(R.id.desc);
-                    ImageView image = (ImageView) root.findViewById(R.id.image);
-                    try {
-                        JSONObject object = (JSONObject) getItem(position);
-                        title.setText(object.getString("title"));
-                        desc.setText(object.getString("desc"));
-                        mImageLoader.load(object.getString("image"), image);
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
+                ViewHolder viewHolder;
+
+                if (convertView == null) {
+                    LayoutInflater inflater = LayoutInflater.from(getActivity());
+                    convertView = inflater.inflate(R.layout.list_item_layout, parent, false);
+
+                    viewHolder = new ViewHolder();
+
+                    viewHolder.title = (TextView) convertView.findViewById(R.id.title);
+                    viewHolder.desc = (TextView) convertView.findViewById(R.id.desc);
+                    viewHolder.image = (ImageView) convertView.findViewById(R.id.image);
+
+                    convertView.setTag(viewHolder);
                 }
 
-                return root;
+                bindView(convertView, position);
+
+                return convertView;
+            }
+
+            private void bindView(View view, int position) {
+                ViewHolder viewHolder = (ViewHolder) view.getTag();
+
+                try {
+                    JSONObject object = (JSONObject) getItem(position);
+                    viewHolder.title.setText(object.getString("title"));
+                    viewHolder.desc.setText(object.getString("desc"));
+
+                    mImageLoader.load(object.getString("image"), viewHolder.image);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
             }
 
             public void setItems(JSONArray items) {
                 mItems = items;
             }
+        }
+
+        private class ViewHolder {
+            TextView title;
+            TextView desc;
+            ImageView image;
         }
     }
 }
