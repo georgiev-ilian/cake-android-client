@@ -18,14 +18,14 @@ import java.security.InvalidParameterException;
  * Created by Riad on 20/05/2015.
  *
  */
-public class ImageLoader {
+class ImageLoader {
 
     private static final String TAG = ImageLoader.class.getSimpleName();
 
     private final LruCache<String, Bitmap> memoryCache;
 
 
-    public ImageLoader() {
+    ImageLoader() {
         memoryCache = setupCache();
     }
 
@@ -44,13 +44,13 @@ public class ImageLoader {
         return memoryCache;
     }
 
-    public void addBitmapToMemoryCache(String key, Bitmap bitmap) {
+    private void addBitmapToMemoryCache(String key, Bitmap bitmap) {
         if (getBitmapFromMemCache(key) == null) {
             memoryCache.put(key, bitmap);
         }
     }
 
-    public Bitmap getBitmapFromMemCache(String key) {
+    private Bitmap getBitmapFromMemCache(String key) {
         return memoryCache.get(key);
     }
 
@@ -60,7 +60,7 @@ public class ImageLoader {
      * @param url       image url
      * @param imageView view to set image too.
      */
-    public void load(String url, ImageView imageView) {
+    void load(String url, ImageView imageView) {
         if (TextUtils.isEmpty(url)) {
             throw new InvalidParameterException("URL is empty!");
         }
@@ -82,7 +82,7 @@ public class ImageLoader {
 
         private ImageView imageView;
 
-        public LoadTask(ImageView imageView) {
+        LoadTask(ImageView imageView) {
             this.imageView = imageView;
         }
 

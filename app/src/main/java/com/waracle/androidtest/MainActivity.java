@@ -176,11 +176,11 @@ public class MainActivity extends AppCompatActivity {
             private JSONArray mItems;
             private ImageLoader mImageLoader;
 
-            public MyAdapter() {
+            MyAdapter() {
                 this(new JSONArray());
             }
 
-            public MyAdapter(JSONArray items) {
+            MyAdapter(JSONArray items) {
                 mItems = items;
                 mImageLoader = new ImageLoader();
             }
@@ -242,7 +242,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
 
-            public void setItems(JSONArray items) {
+            void setItems(JSONArray items) {
                 mItems = items;
             }
         }
