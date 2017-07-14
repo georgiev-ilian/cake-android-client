@@ -2,10 +2,10 @@ package com.waracle.androidtest;
 
 import android.util.Log;
 
+import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 
 /**
  * Created by Riad on 20/05/2015.
@@ -14,26 +14,24 @@ import java.util.ArrayList;
 class StreamUtils {
     private static final String TAG = StreamUtils.class.getSimpleName();
 
-    // Can you see what's wrong with this???
-    static byte[] readUnknownFully(InputStream stream) throws IOException {
-        // Read in stream of bytes
-        ArrayList<Byte> data = new ArrayList<>();
-        while (true) {
-            int result = stream.read();
-            if (result == -1) {
-                break;
-            }
-            data.add((byte) result);
-        }
+    private static final int CHUNK_SIZE = 1024;
 
-        // Convert ArrayList<Byte> to byte[]
-        byte[] bytes = new byte[data.size()];
-        for (int i = 0; i < bytes.length; i++) {
-            bytes[i] = data.get(i);
+    // Can you see what's wrong with this???
+
+    // Answer : unnessecary conversion to ArrayList, lack of control over byte size that are read
+    static byte[] readUnknownFully(InputStream stream) throws IOException {
+
+        // Read in stream of bytes
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        byte[] buffer = new byte[CHUNK_SIZE];
+        while (true) {
+            int r = stream.read(buffer);
+            if (r == -1) break;
+            out.write(buffer, 0, r);
         }
 
         // Return the raw byte array.
-        return bytes;
+        return out.toByteArray();
     }
 
     static void close(Closeable closeable) {
