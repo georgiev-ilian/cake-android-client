@@ -1,6 +1,7 @@
 package com.waracle.androidtest;
 
 import android.annotation.SuppressLint;
+import android.net.http.HttpResponseCache;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
@@ -21,6 +22,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -28,18 +30,37 @@ import java.net.URL;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final String TAG = "MainActivity";
+
     private static final String JSON_URL = "https://gist.githubusercontent.com/hart88/198f29ec5114a3ec3460/" +
-            "raw/8dd19a88f9b8d24c23d9960f3300d0c917a4f07c/cake.json";
+                                           "raw/8dd19a88f9b8d24c23d9960f3300d0c917a4f07c/cake.json";
+
+    private PlaceholderFragment placeholderFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         if (savedInstanceState == null) {
+            placeholderFragment = new PlaceholderFragment();
             getSupportFragmentManager().beginTransaction()
-                    .add(R.id.container, new PlaceholderFragment())
-                    .commit();
+                                       .add(R.id.container, placeholderFragment)
+                                       .commit();
         }
+
+        try {
+            File httpCacheDir = new File(getCacheDir(), "http");
+            long httpCacheSize = 10 * 1024 * 1024; // 10 MiB
+            HttpResponseCache.install(httpCacheDir, httpCacheSize);
+        } catch (IOException e) {
+            Log.i(TAG, "HTTP response cache installation failed:" + e);
+        }
+
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
     }
 
     @Override
@@ -58,6 +79,16 @@ public class MainActivity extends AppCompatActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_refresh) {
+
+            HttpResponseCache cache = HttpResponseCache.getInstalled();
+            if (cache != null) {
+                cache.flush();
+            }
+
+            if (placeholderFragment != null) {
+                placeholderFragment.refresh();
+            }
+
             return true;
         }
 
@@ -86,6 +117,10 @@ public class MainActivity extends AppCompatActivity {
             View rootView = inflater.inflate(R.layout.fragment_main, container, false);
             mListView = (ListView) rootView.findViewById(android.R.id.list);
             return rootView;
+        }
+
+        public void refresh() {
+            mAdapter.notifyDataSetChanged();
         }
 
         @Override
@@ -127,6 +162,7 @@ public class MainActivity extends AppCompatActivity {
         private JSONArray loadData() throws IOException, JSONException {
             URL url = new URL(JSON_URL);
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+
             InputStream in = null;
             try {
                 in = new BufferedInputStream(urlConnection.getInputStream());

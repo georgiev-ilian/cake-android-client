@@ -115,6 +115,9 @@ class ImageLoader {
         HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
         InputStream inputStream = null;
         try {
+            int maxStale = 60 * 60 * 24 * 28; // tolerate 4-weeks stale
+            connection.addRequestProperty("Cache-Control", "max-stale=" + maxStale);
+
             try {
                 // Read data from workstation
                 inputStream = connection.getInputStream();
