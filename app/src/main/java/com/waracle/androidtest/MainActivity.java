@@ -26,7 +26,6 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-
 public class MainActivity extends AppCompatActivity {
 
     private static final String JSON_URL = "https://gist.githubusercontent.com/hart88/198f29ec5114a3ec3460/" +
@@ -128,8 +127,9 @@ public class MainActivity extends AppCompatActivity {
         private JSONArray loadData() throws IOException, JSONException {
             URL url = new URL(JSON_URL);
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+            InputStream in = null;
             try {
-                InputStream in = new BufferedInputStream(urlConnection.getInputStream());
+                in = new BufferedInputStream(urlConnection.getInputStream());
 
                 // Can you think of a way to improve the performance of loading data
                 // using HTTP headers???
@@ -147,6 +147,9 @@ public class MainActivity extends AppCompatActivity {
                 // Read string as JSON.
                 return new JSONArray(jsonText);
             } finally {
+                // Close the input stream.
+                StreamUtils.close(in);
+
                 urlConnection.disconnect();
             }
         }
